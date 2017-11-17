@@ -16,6 +16,8 @@ core Proejct open Module cs file
 
 
   [DependsOn(typeof(AbpElasticSearchModule))]
+  
+  
    public class CodeModule : AbpModule
     {
         public override void PreInitialize()

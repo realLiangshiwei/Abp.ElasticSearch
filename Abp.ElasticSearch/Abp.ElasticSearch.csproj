@@ -7,11 +7,13 @@
     <Authors>LiangShiWei</Authors>
     <Company />
     <Description>AbpElasticSearch扩展包，默认集成elasticsearch，使用时需要在启动时使用ElasticSearchConfiguration类进行配置连接连接字符串还有授权</Description>
+    <RepositoryUrl>https://github.com/ShiWei-L/Abp.ElasticSearch</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Abp" Version="3.2.1" />
+    <PackageReference Include="Abp" Version="3.2.5" />
     <PackageReference Include="NEST" Version="5.5.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
   </ItemGroup>
 
 </Project>

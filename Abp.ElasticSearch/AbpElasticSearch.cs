@@ -16,23 +16,26 @@ namespace Abp.ElasticSearch
     {
         public IElasticClient EsClient { get; set; }
 
-        public AbpElasticSearch()
+        public AbpElasticSearch(IElasticSearchConfigration elasticSearchConfigration)
         {
+            _elasticSearchConfigration = elasticSearchConfigration;
             EsClient = GetClient();
         }
 
+
+        private readonly IElasticSearchConfigration _elasticSearchConfigration;
         /// <summary>
         /// GetesClient
         /// </summary>
         /// <returns></returns>
         private ElasticClient GetClient()
         {
-            var str = ElasticSearchConfiguration.ConnectionString;
+            var str = _elasticSearchConfigration.ConnectionString;
             var strs = str.Split('|');
             var nodes = strs.Select(s => new Uri(s)).ToList();
             var connectionPool = new SniffingConnectionPool(nodes);
             var connectionString = new ConnectionSettings(connectionPool);
-            connectionString.BasicAuthentication(ElasticSearchConfiguration.AuthUserName, ElasticSearchConfiguration.AuthPassWord);
+            connectionString.BasicAuthentication(_elasticSearchConfigration.AuthUserName, _elasticSearchConfigration.AuthPassWord);
 
             return new ElasticClient(connectionString);
         }

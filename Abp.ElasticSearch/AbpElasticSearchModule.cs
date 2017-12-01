@@ -1,4 +1,5 @@
 ﻿using Abp.Dependency;
+using Abp.ElasticSearch.Configuration;
 using Abp.Modules;
 using Abp.Reflection.Extensions;
 
@@ -9,7 +10,9 @@ namespace Abp.ElasticSearch
     {
         public override void PreInitialize()
         {
-            IocManager.Register(typeof(IElasticsearch), typeof(AbpElasticSearch), DependencyLifeStyle.Transient);
+            IocManager.Register<IElasticSearchConfigration, ElasticSearchConfiguration>();
+
+            IocManager.Register<IElasticsearch,AbpElasticSearch>(DependencyLifeStyle.Transient);
         }
 
         public override void Initialize()

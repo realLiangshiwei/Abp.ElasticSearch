@@ -12,26 +12,22 @@ in Visual Studio,using the Package Manager Console :
 
 core Proejct open Module cs file
 
-<code>
-
-
-  [DependsOn(typeof(AbpElasticSearchModule))]
-  
-   public class CodeModule : AbpModule
+    [DependsOn(typeof(AbpElasticSearchModule))]
+    public class CodeModule : AbpModule
     {
-    
+
         public override void PreInitialize()
         {
-            ElasticSearchConfiguration.ConnectionString = "xxx";
-            ElasticSearchConfiguration.AuthUserName = "xxx";
-            ElasticSearchConfiguration.AuthPassWord = "xxx";
-            IocManager.RegisterAssemblyByConvention(Assembly.GetExecutingAssembly());
+            Configuration.Modules().ElasticSearch().ConnectionString = "your collectionstring";
+            Configuration.Modules().ElasticSearch().AuthUserName = "your authusername";
+            Configuration.Modules().ElasticSearch().AuthPassWord = "your authpassword";
             //
         }
 
         public override void Initialize()
         {
             // 
+            IocManager.RegisterAssemblyByConvention(Assembly.GetExecutingAssembly());
         }
     }
-</code>
+ 

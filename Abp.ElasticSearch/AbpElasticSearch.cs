@@ -164,7 +164,7 @@ namespace Abp.ElasticSearch
             }
             var response = await EsClient.BulkAsync(bulk);
             if (response.Errors)
-                throw new Exception($"Bulk InsertOrUpdate Docuemnt failed at index {indexName} :{response.ServerError.Error.Reason}");
+                throw new ElasticSearchException($"Bulk InsertOrUpdate Docuemnt failed at index {indexName} :{response.ServerError.Error.Reason}");
 
         }
 
@@ -181,7 +181,7 @@ namespace Abp.ElasticSearch
             }
             var response = await EsClient.BulkAsync(bulk);
             if (response.Errors)
-                throw new Exception($"Bulk Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
+                throw new ElasticSearchException($"Bulk Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
         }
 
         /// <summary>
@@ -224,7 +224,7 @@ namespace Abp.ElasticSearch
         {
             var response = await EsClient.DeleteAsync(new DeleteRequest(indexName, typeName, new Id(model)));
             if (response.ServerError == null) return ;
-            throw new Exception($"Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
+            throw new ElasticSearchException($"Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
          
         }
 
@@ -237,7 +237,7 @@ namespace Abp.ElasticSearch
         {
             var response = await EsClient.DeleteIndexAsync(indexName);
             if (response.Acknowledged) return ;
-            throw new Exception($"Delete index {indexName} failed :{response.ServerError.Error.Reason}");
+            throw new ElasticSearchException($"Delete index {indexName} failed :{response.ServerError.Error.Reason}");
         }
 
         public virtual async Task ReIndex<T, TKey>(string indexName) where T : EntityDto<TKey>
@@ -255,7 +255,12 @@ namespace Abp.ElasticSearch
         public virtual async Task ReBuild<T, TKey>(string indexName) where T : EntityDto<TKey>
         {
             var result = await EsClient.GetAliasAsync(q => q.Index(indexName));
-            var oldName = result.Indices.Keys.First().Name;
+            var oldName = result.Indices.Keys.FirstOrDefault();
+            
+            if (oldName == null)
+            {
+                throw new ElasticSearchException($"not found index {indexName}");
+            }
             //创建新的索引
             var newIndex = indexName + DateTime.Now.Ticks;
             var createResult = await EsClient.CreateIndexAsync(newIndex,
@@ -264,7 +269,7 @@ namespace Abp.ElasticSearch
                         .Mappings(ms => ms.Map<T>(m => m.AutoMap())));
             if (!createResult.Acknowledged)
             {
-                throw new Exception($"reBuild create newIndex {indexName} failed :{result.ServerError.Error.Reason}");
+                throw new ElasticSearchException($"reBuild create newIndex {indexName} failed :{result.ServerError.Error.Reason}");
             }
             //重建索引数据
             var reResult = await EsClient.ReindexOnServerAsync(descriptor => descriptor.Source(source => source.Index(indexName))
@@ -272,18 +277,18 @@ namespace Abp.ElasticSearch
 
             if (reResult.ServerError != null)
             {
-                throw new Exception($"reBuild {indexName} datas failed :{reResult.ServerError.Error.Reason}");
+                throw new ElasticSearchException($"reBuild {indexName} datas failed :{reResult.ServerError.Error.Reason}");
             }
 
             //删除旧索引
-            var alReuslt = await EsClient.AliasAsync(al => al.Remove(rem => rem.Index(oldName).Alias(indexName)).Add(add => add.Index(newIndex).Alias(indexName)));
+            var alReuslt = await EsClient.AliasAsync(al => al.Remove(rem => rem.Index(oldName.Name).Alias(indexName)).Add(add => add.Index(newIndex).Alias(indexName)));
 
             if (!alReuslt.Acknowledged)
             {
-                throw new Exception($"reBuild set Alias {indexName}  failed :{alReuslt.ServerError.Error.Reason}");
+                throw new ElasticSearchException($"reBuild set Alias {indexName}  failed :{alReuslt.ServerError.Error.Reason}");
             }
             var delResult = await EsClient.DeleteIndexAsync(oldName);
-            throw new Exception($"reBuild delete old Index {oldName} failed :" + delResult.ServerError.Error.Reason);
+            throw new ElasticSearchException($"reBuild delete old Index {oldName.Name} failed :" + delResult.ServerError.Error.Reason);
         }
 
         /// <summary>

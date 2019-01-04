@@ -255,7 +255,7 @@ namespace Abp.ElasticSearch
         public virtual async Task ReBuild<T, TKey>(string indexName) where T : EntityDto<TKey>
         {
             var result = await EsClient.GetAliasAsync(q => q.Index(indexName));
-            var oldName = result.Indices.Keys.First();
+            var oldName = result.Indices.Keys.First().Name;
             //创建新的索引
             var newIndex = indexName + DateTime.Now.Ticks;
             var createResult = await EsClient.CreateIndexAsync(newIndex,

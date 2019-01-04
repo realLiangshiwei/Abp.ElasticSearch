@@ -2,18 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.2.0</Version>
+    <Version>1.4.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>LiangShiWei</Authors>
     <Company />
-    <Description>AbpElasticSearch扩展包，默认集成elasticsearch，使用时需要在启动时使用ElasticSearchConfiguration类进行配置连接连接字符串还有授权</Description>
+    <Description>AbpElasticSearch扩展包，默认集成elasticsearch，
+启动时使用Configuration.Modules.ElasticSearch()进行配置连接连接字符串还有授权</Description>
     <RepositoryUrl>https://github.com/ShiWei-L/Abp.ElasticSearch</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/ShiWei-L/Abp.ElasticSearch</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Abp" Version="3.2.5" />
-    <PackageReference Include="NEST" Version="5.5.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="Abp" Version="4.0.2" />
+    <PackageReference Include="NEST" Version="6.4.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
   </ItemGroup>
 
 </Project>

@@ -18,9 +18,9 @@ core Proejct open Module cs file
 
         public override void PreInitialize()
         {
-            Configuration.Modules().ElasticSearch().ConnectionString = "your collectionstring";
-            Configuration.Modules().ElasticSearch().AuthUserName = "your authusername";
-            Configuration.Modules().ElasticSearch().AuthPassWord = "your authpassword";
+            Configuration.Modules.ElasticSearch().ConnectionString = "your collectionstring";
+            Configuration.Modules.ElasticSearch().AuthUserName = "your authusername";
+            Configuration.Modules.ElasticSearch().AuthPassWord = "your authpassword";
             //
         }
 

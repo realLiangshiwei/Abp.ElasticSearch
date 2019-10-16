@@ -11,14 +11,15 @@ namespace Abp.ElasticSearch
     /// </summary>
     public interface IElasticsearch: ITransientDependency
     {
-
         /// <summary>
         /// CreateEsIndex Not Mapping
         /// Auto Set Alias alias is Input IndexName
         /// </summary>
         /// <param name="indexName"></param>
+        /// <param name="shard"></param>
+        /// <param name="numberOfReplicas"></param>
         /// <returns></returns>
-        Task CrateIndexAsync(string indexName);
+        Task CrateIndexAsync(string indexName, int shard = 1, int numberOfReplicas = 1);
 
         /// <summary>
         /// CreateEsIndex auto Mapping T Property
@@ -27,8 +28,10 @@ namespace Abp.ElasticSearch
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TKey"></typeparam>
         /// <param name="indexName"></param>
+        /// <param name="shard"></param>
+        /// <param name="numberOfReplicas"></param>
         /// <returns></returns>
-        Task CreateIndexAsync<T, TKey>(string indexName) where T : EntityDto<TKey>;
+        Task CreateIndexAsync<T, TKey>(string indexName, int shard = 1, int numberOfReplicas = 1) where T : EntityDto<TKey>;
 
         /// <summary>
         /// ReIndex
@@ -52,7 +55,7 @@ namespace Abp.ElasticSearch
 
 
         /// <summary>
-        /// Bulk AddOrUpdate Docuemnt,Default bulkNum is 1000
+        /// Bulk AddOrUpdate Document,Default bulkNum is 1000
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TKey"></typeparam>
@@ -63,7 +66,7 @@ namespace Abp.ElasticSearch
         Task BulkAddorUpdateAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000) where T : EntityDto<TKey>;
 
         /// <summary>
-        ///  Bulk Delete Docuemnt,Default bulkNum is 1000
+        ///  Bulk Delete Document,Default bulkNum is 1000
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TKey"></typeparam>
@@ -74,7 +77,7 @@ namespace Abp.ElasticSearch
         Task BulkDeleteAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000) where T : EntityDto<TKey>;
 
         /// <summary>
-        /// Delete Docuemnt
+        /// Delete Document
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TKey"></typeparam>
@@ -82,7 +85,7 @@ namespace Abp.ElasticSearch
         /// <param name="typeName"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        Task DeleteAsync<T, TKey>(string indexName, string typeName, T model) where T : EntityDto<TKey>;
+        Task DeleteAsync<T, TKey>(string indexName, T model) where T : EntityDto<TKey>;
 
         /// <summary>
         /// Delete Index
@@ -93,7 +96,7 @@ namespace Abp.ElasticSearch
 
 
         /// <summary>
-        /// Non-stop Update Doucments
+        /// Non-stop Update Documents
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TKey"></typeparam>

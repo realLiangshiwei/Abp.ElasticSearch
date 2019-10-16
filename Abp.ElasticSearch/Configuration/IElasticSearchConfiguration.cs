@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Abp.ElasticSearch.Configuration
 {
-    public interface IElasticSearchConfigration
+    public interface IElasticSearchConfiguration
     {
 
         /// <summary>

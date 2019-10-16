@@ -2,11 +2,11 @@
 
 namespace Abp.ElasticSearch.Configuration
 {
-    public static class ElasticSearchConfigrationExtensions
+    public static class ElasticSearchConfigurationExtensions
     {
-        public static IElasticSearchConfigration ElasticSearch(this IModuleConfigurations configurations)
+        public static IElasticSearchConfiguration ElasticSearch(this IModuleConfigurations configurations)
         {
-            return configurations.AbpConfiguration.Get<IElasticSearchConfigration>();
+            return configurations.AbpConfiguration.Get<IElasticSearchConfiguration>();
         }
     }
 }

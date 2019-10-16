@@ -3,7 +3,7 @@
     /// <summary>
     /// 连接配置
     /// </summary>
-    public class ElasticSearchConfiguration : IElasticSearchConfigration
+    public class ElasticSearchConfiguration : IElasticSearchConfiguration
     {
         /// <summary>
         /// 连接字符串支持多个节点主机 使用|进行分隔

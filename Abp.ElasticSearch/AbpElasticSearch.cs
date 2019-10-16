@@ -16,28 +16,29 @@ namespace Abp.ElasticSearch
     {
         public IElasticClient EsClient { get; set; }
 
-        public AbpElasticSearch(IElasticSearchConfigration elasticSearchConfigration)
+        public AbpElasticSearch(IElasticSearchConfiguration elasticSearchConfiguration)
         {
-            _elasticSearchConfigration = elasticSearchConfigration;
+            _elasticSearchConfiguration = elasticSearchConfiguration;
             EsClient = GetClient();
         }
 
 
-        private readonly IElasticSearchConfigration _elasticSearchConfigration;
+        private readonly IElasticSearchConfiguration _elasticSearchConfiguration;
         /// <summary>
-        /// GetesClient
+        /// GetClient
         /// </summary>
         /// <returns></returns>
         private ElasticClient GetClient()
         {
-            var str = _elasticSearchConfigration.ConnectionString;
+            var str = _elasticSearchConfiguration.ConnectionString;
             var strs = str.Split('|');
             var nodes = strs.Select(s => new Uri(s)).ToList();
             var connectionPool = new SniffingConnectionPool(nodes);
             var connectionString = new ConnectionSettings(connectionPool);
-            connectionString.BasicAuthentication(_elasticSearchConfigration.AuthUserName, _elasticSearchConfigration.AuthPassWord);
+            connectionString.BasicAuthentication(_elasticSearchConfiguration.AuthUserName, _elasticSearchConfiguration.AuthPassWord);
 
             return new ElasticClient(connectionString);
+
         }
 
         /// <summary>
@@ -45,22 +46,25 @@ namespace Abp.ElasticSearch
         /// Auto Set Alias alias is Input IndexName
         /// </summary>
         /// <param name="indexName"></param>
+        /// <param name="shard"></param>
+        /// <param name="numberOfReplicas"></param>
         /// <returns></returns>
-        public virtual async Task CrateIndexAsync(string indexName)
+        public virtual async Task CrateIndexAsync(string indexName, int shard = 1, int numberOfReplicas = 1)
         {
-            var exis = await EsClient.IndexExistsAsync(indexName);
-            if (exis.Exists)
+            var exits = await EsClient.Indices.AliasExistsAsync(indexName);
+
+            if (exits.Exists)
                 return;
             var newName = indexName + DateTime.Now.Ticks;
             var result = await EsClient
-                .CreateIndexAsync(newName,
+                .Indices.CreateAsync(newName,
                     ss =>
                         ss.Index(newName)
                             .Settings(
-                                o => o.NumberOfShards(1).NumberOfReplicas(1).Setting("max_result_window", int.MaxValue)));
+                                o => o.NumberOfShards(shard).NumberOfReplicas(numberOfReplicas).Setting("max_result_window", int.MaxValue)));
             if (result.Acknowledged)
             {
-                await EsClient.AliasAsync(al => al.Add(add => add.Index(newName).Alias(indexName)));
+                await EsClient.Indices.PutAliasAsync(newName, indexName);
                 return;
             }
             throw new ElasticSearchException($"Create Index {indexName} failed :" + result.ServerError.Error.Reason);
@@ -73,24 +77,26 @@ namespace Abp.ElasticSearch
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TKey"></typeparam>
         /// <param name="indexName"></param>
+        /// <param name="shard"></param>
+        /// <param name="numberOfReplicas"></param>
         /// <returns></returns>
-        public virtual async Task CreateIndexAsync<T, TKey>(string indexName) where T : EntityDto<TKey>
+        public virtual async Task CreateIndexAsync<T, TKey>(string indexName, int shard = 1, int numberOfReplicas = 1) where T : EntityDto<TKey>
         {
-            var exis = await EsClient.IndexExistsAsync(indexName);
+            var exits = await EsClient.Indices.AliasExistsAsync(indexName);
 
-            if (exis.Exists)
+            if (exits.Exists)
                 return;
             var newName = indexName + DateTime.Now.Ticks;
             var result = await EsClient
-                .CreateIndexAsync(newName,
+                .Indices.CreateAsync(newName,
                     ss =>
                         ss.Index(newName)
                             .Settings(
-                                o => o.NumberOfShards(1).NumberOfReplicas(1).Setting("max_result_window", int.MaxValue))
-                            .Mappings(m => m.Map<T>(mm => mm.AutoMap())));
+                                o => o.NumberOfShards(shard).NumberOfReplicas(numberOfReplicas).Setting("max_result_window", int.MaxValue))
+                            .Map(m => m.AutoMap<T>()));
             if (result.Acknowledged)
             {
-                await EsClient.AliasAsync(al => al.Add(add => add.Index(newName).Alias(indexName)));
+                await EsClient.Indices.PutAliasAsync(newName, indexName);
                 return;
             }
             throw new ElasticSearchException($"Create Index {indexName} failed : :" + result.ServerError.Error.Reason);
@@ -106,9 +112,9 @@ namespace Abp.ElasticSearch
         /// <returns></returns>
         public virtual async Task AddOrUpdateAsync<T, TKey>(string indexName, T model) where T : EntityDto<TKey>
         {
-            var exis = EsClient.DocumentExists(DocumentPath<T>.Id(new Id(model)), dd => dd.Index(indexName));
+            var exits = EsClient.DocumentExists(DocumentPath<T>.Id(new Id(model)), dd => dd.Index(indexName));
 
-            if (exis.Exists)
+            if (exits.Exists)
             {
                 var result = await EsClient.UpdateAsync(DocumentPath<T>.Id(new Id(model)),
                     ss => ss.Index(indexName).Doc(model).RetryOnConflict(3));
@@ -212,20 +218,18 @@ namespace Abp.ElasticSearch
         }
 
         /// <summary>
-        /// Delete Docuemnt
+        /// Delete Document
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TKey"></typeparam>
         /// <param name="indexName"></param>
-        /// <param name="typeName"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        public virtual async Task DeleteAsync<T, TKey>(string indexName, string typeName, T model) where T : EntityDto<TKey>
+        public virtual async Task DeleteAsync<T, TKey>(string indexName,  T model) where T : EntityDto<TKey>
         {
-            var response = await EsClient.DeleteAsync(new DeleteRequest(indexName, typeName, new Id(model)));
-            if (response.ServerError == null) return ;
-            throw new ElasticSearchException($"Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
-         
+            var response = await EsClient.DeleteAsync(new DeleteRequest(indexName, new Id(model)));
+            if (response.ServerError == null) return;
+            throw new Exception($"Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
         }
 
         /// <summary>
@@ -235,9 +239,9 @@ namespace Abp.ElasticSearch
         /// <returns></returns>
         public virtual async Task DeleteIndexAsync(string indexName)
         {
-            var response = await EsClient.DeleteIndexAsync(indexName);
-            if (response.Acknowledged) return ;
-            throw new ElasticSearchException($"Delete index {indexName} failed :{response.ServerError.Error.Reason}");
+            var response = await EsClient.Indices.DeleteAsync(indexName);
+            if (response.Acknowledged) return;
+            throw new Exception($"Delete index {indexName} failed :{response.ServerError.Error.Reason}");
         }
 
         public virtual async Task ReIndex<T, TKey>(string indexName) where T : EntityDto<TKey>
@@ -246,7 +250,7 @@ namespace Abp.ElasticSearch
             await CreateIndexAsync<T, TKey>(indexName);
         }
         /// <summary>
-        /// Non-stop Update Doucments
+        /// Non-stop Update Documents
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TKey"></typeparam>
@@ -254,22 +258,17 @@ namespace Abp.ElasticSearch
         /// <returns></returns>
         public virtual async Task ReBuild<T, TKey>(string indexName) where T : EntityDto<TKey>
         {
-            var result = await EsClient.GetAliasAsync(q => q.Index(indexName));
-            var oldName = result.Indices.Keys.FirstOrDefault();
-            
-            if (oldName == null)
-            {
-                throw new ElasticSearchException($"not found index {indexName}");
-            }
+            var result = await EsClient.Indices.GetAliasAsync(indexName);
+            var oldName = result.Indices.Keys.First();
             //创建新的索引
             var newIndex = indexName + DateTime.Now.Ticks;
-            var createResult = await EsClient.CreateIndexAsync(newIndex,
+            var createResult = await EsClient.Indices.CreateAsync(newIndex,
                 c =>
                     c.Index(newIndex)
-                        .Mappings(ms => ms.Map<T>(m => m.AutoMap())));
+                        .Map(m => m.AutoMap<T>()));
             if (!createResult.Acknowledged)
             {
-                throw new ElasticSearchException($"reBuild create newIndex {indexName} failed :{result.ServerError.Error.Reason}");
+                throw new Exception($"reBuild create newIndex {indexName} failed :{result.ServerError.Error.Reason}");
             }
             //重建索引数据
             var reResult = await EsClient.ReindexOnServerAsync(descriptor => descriptor.Source(source => source.Index(indexName))
@@ -277,18 +276,21 @@ namespace Abp.ElasticSearch
 
             if (reResult.ServerError != null)
             {
-                throw new ElasticSearchException($"reBuild {indexName} datas failed :{reResult.ServerError.Error.Reason}");
+                throw new Exception($"reBuild {indexName} datas failed :{reResult.ServerError.Error.Reason}");
             }
 
             //删除旧索引
-            var alReuslt = await EsClient.AliasAsync(al => al.Remove(rem => rem.Index(oldName.Name).Alias(indexName)).Add(add => add.Index(newIndex).Alias(indexName)));
+            var deleteResult = await EsClient.Indices.DeleteAsync(oldName);
+            var reAliasResult = await EsClient.Indices.PutAliasAsync(newIndex, indexName);
 
-            if (!alReuslt.Acknowledged)
+            if (!deleteResult.Acknowledged)
             {
-                throw new ElasticSearchException($"reBuild set Alias {indexName}  failed :{alReuslt.ServerError.Error.Reason}");
+                throw new Exception($"reBuild delete old Index {oldName.Name}   failed :{deleteResult.ServerError.Error.Reason}");
             }
-            var delResult = await EsClient.DeleteIndexAsync(oldName);
-            throw new ElasticSearchException($"reBuild delete old Index {oldName.Name} failed :" + delResult.ServerError.Error.Reason);
+            if (!reAliasResult.IsValid)
+            {
+                throw new Exception($"reBuild set Alias {indexName}  failed :{reAliasResult.ServerError.Error.Reason}");
+            }
         }
 
         /// <summary>
@@ -310,22 +312,22 @@ namespace Abp.ElasticSearch
             string preTags = "<strong style=\"color: red;\">", string postTags = "</strong>", bool disableHigh = false, params string[] highField) where T : EntityDto<TKey>
         {
             query.Index(indexName);
-            var highdes = new HighlightDescriptor<T>();
+            var highlight = new HighlightDescriptor<T>();
             if (disableHigh)
             {
                 preTags = "";
                 postTags = "";
             }
-            highdes.PreTags(preTags).PostTags(postTags);
+            highlight.PreTags(preTags).PostTags(postTags);
 
-            var ishigh = highField != null && highField.Length > 0;
+            var isHigh = highField != null && highField.Length > 0;
 
             var hfs = new List<Func<HighlightFieldDescriptor<T>, IHighlightField>>();
 
             //分页
             query.Skip(skip).Take(size);
             //关键词高亮
-            if (ishigh)
+            if (isHigh)
             {
                 foreach (var s in highField)
                 {
@@ -333,8 +335,8 @@ namespace Abp.ElasticSearch
                 }
             }
 
-            highdes.Fields(hfs.ToArray());
-            query.Highlight(h => highdes);
+            highlight.Fields(hfs.ToArray());
+            query.Highlight(h => highlight);
             if (includeFields != null)
                 query.Source(ss => ss.Includes(ff => ff.Fields(includeFields.ToArray())));
             var response = await EsClient.SearchAsync<T>(query);

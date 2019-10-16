@@ -10,7 +10,7 @@ namespace Abp.ElasticSearch
     {
         public override void PreInitialize()
         {
-            IocManager.Register<IElasticSearchConfigration, ElasticSearchConfiguration>();
+            IocManager.Register<IElasticSearchConfiguration, ElasticSearchConfiguration>();
 
             IocManager.Register<IElasticsearch,AbpElasticSearch>(DependencyLifeStyle.Transient);
         }

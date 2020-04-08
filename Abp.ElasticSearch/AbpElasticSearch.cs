@@ -33,7 +33,7 @@ namespace Abp.ElasticSearch
             var str = _elasticSearchConfiguration.ConnectionString;
             var strs = str.Split('|');
             var nodes = strs.Select(s => new Uri(s)).ToList();
-            var connectionPool = new SniffingConnectionPool(nodes);
+            var connectionPool = new StaticConnectionPool(nodes);
             var connectionString = new ConnectionSettings(connectionPool);
             connectionString.BasicAuthentication(_elasticSearchConfiguration.AuthUserName, _elasticSearchConfiguration.AuthPassWord);
 
@@ -141,21 +141,8 @@ namespace Abp.ElasticSearch
         /// <returns></returns>
         public virtual async Task BulkAddorUpdateAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000) where T : EntityDto<TKey>
         {
-            if (list.Count <= bulkNum)
-                await BulkAddOrUpdate<T, TKey>(indexName, list);
-            else
-            {
+            await BulkAddOrUpdate<T, TKey>(indexName, list);
 
-                var total = (int)Math.Ceiling(list.Count * 1.0f / bulkNum);
-                var tasks = new List<Task>();
-                for (var i = 0; i < total; i++)
-                {
-                    var i1 = i;
-                    tasks.Add(Task.Factory.StartNew(() => BulkAddOrUpdate<T, TKey>(indexName, list.Skip(i1 * bulkNum).Take(bulkNum).ToList()))); ;
-                }
-                await Task.WhenAll(tasks.ToArray());
-
-            }
         }
 
         private async Task BulkAddOrUpdate<T, TKey>(string indexName, List<T> list) where T : EntityDto<TKey>
@@ -225,7 +212,7 @@ namespace Abp.ElasticSearch
         /// <param name="indexName"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        public virtual async Task DeleteAsync<T, TKey>(string indexName,  T model) where T : EntityDto<TKey>
+        public virtual async Task DeleteAsync<T, TKey>(string indexName, T model) where T : EntityDto<TKey>
         {
             var response = await EsClient.DeleteAsync(new DeleteRequest(indexName, new Id(model)));
             if (response.ServerError == null) return;

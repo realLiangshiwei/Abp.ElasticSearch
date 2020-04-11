@@ -24,6 +24,7 @@ namespace Abp.ElasticSearch
 
 
         private readonly IElasticSearchConfiguration _elasticSearchConfiguration;
+
         /// <summary>
         /// GetClient
         /// </summary>
@@ -35,10 +36,10 @@ namespace Abp.ElasticSearch
             var nodes = strs.Select(s => new Uri(s)).ToList();
             var connectionPool = new StaticConnectionPool(nodes);
             var connectionString = new ConnectionSettings(connectionPool);
-            connectionString.BasicAuthentication(_elasticSearchConfiguration.AuthUserName, _elasticSearchConfiguration.AuthPassWord);
+            connectionString.BasicAuthentication(_elasticSearchConfiguration.AuthUserName,
+                _elasticSearchConfiguration.AuthPassWord);
 
             return new ElasticClient(connectionString);
-
         }
 
         /// <summary>
@@ -61,12 +62,14 @@ namespace Abp.ElasticSearch
                     ss =>
                         ss.Index(newName)
                             .Settings(
-                                o => o.NumberOfShards(shard).NumberOfReplicas(numberOfReplicas).Setting("max_result_window", int.MaxValue)));
+                                o => o.NumberOfShards(shard).NumberOfReplicas(numberOfReplicas)
+                                    .Setting("max_result_window", int.MaxValue)));
             if (result.Acknowledged)
             {
                 await EsClient.Indices.PutAliasAsync(newName, indexName);
                 return;
             }
+
             throw new ElasticSearchException($"Create Index {indexName} failed :" + result.ServerError.Error.Reason);
         }
 
@@ -80,9 +83,10 @@ namespace Abp.ElasticSearch
         /// <param name="shard"></param>
         /// <param name="numberOfReplicas"></param>
         /// <returns></returns>
-        public virtual async Task CreateIndexAsync<T, TKey>(string indexName, int shard = 1, int numberOfReplicas = 1) where T : EntityDto<TKey>
+        public virtual async Task CreateIndexAsync<T, TKey>(string indexName, int shard = 1, int numberOfReplicas = 1)
+            where T : EntityDto<TKey>
         {
-            var exits = await EsClient.Indices.AliasExistsAsync(indexName);
+            var exits = await EsClient.Indices.ExistsAsync(indexName);
 
             if (exits.Exists)
                 return;
@@ -92,13 +96,15 @@ namespace Abp.ElasticSearch
                     ss =>
                         ss.Index(newName)
                             .Settings(
-                                o => o.NumberOfShards(shard).NumberOfReplicas(numberOfReplicas).Setting("max_result_window", int.MaxValue))
+                                o => o.NumberOfShards(shard).NumberOfReplicas(numberOfReplicas)
+                                    .Setting("max_result_window", int.MaxValue))
                             .Map(m => m.AutoMap<T>()));
             if (result.Acknowledged)
             {
                 await EsClient.Indices.PutAliasAsync(newName, indexName);
                 return;
             }
+
             throw new ElasticSearchException($"Create Index {indexName} failed : :" + result.ServerError.Error.Reason);
         }
 
@@ -120,13 +126,15 @@ namespace Abp.ElasticSearch
                     ss => ss.Index(indexName).Doc(model).RetryOnConflict(3));
 
                 if (result.ServerError == null) return;
-                throw new ElasticSearchException($"Update Document failed at index{indexName} :" + result.ServerError.Error.Reason);
+                throw new ElasticSearchException($"Update Document failed at index{indexName} :" +
+                                                 result.ServerError.Error.Reason);
             }
             else
             {
                 var result = await EsClient.IndexAsync<T>(model, ss => ss.Index(indexName));
                 if (result.ServerError == null) return;
-                throw new ElasticSearchException($"Insert Docuemnt failed at index {indexName} :" + result.ServerError.Error.Reason);
+                throw new ElasticSearchException($"Insert Docuemnt failed at index {indexName} :" +
+                                                 result.ServerError.Error.Reason);
             }
         }
 
@@ -139,10 +147,10 @@ namespace Abp.ElasticSearch
         /// <param name="list"></param>
         /// <param name="bulkNum">bulkNum</param>
         /// <returns></returns>
-        public virtual async Task BulkAddorUpdateAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000) where T : EntityDto<TKey>
+        public virtual async Task BulkAddorUpdateAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000)
+            where T : EntityDto<TKey>
         {
             await BulkAddOrUpdate<T, TKey>(indexName, list);
-
         }
 
         private async Task BulkAddOrUpdate<T, TKey>(string indexName, List<T> list) where T : EntityDto<TKey>
@@ -155,15 +163,15 @@ namespace Abp.ElasticSearch
             {
                 bulk.Operations.Add(new BulkIndexOperation<T>(item));
             }
+
             var response = await EsClient.BulkAsync(bulk);
             if (response.Errors)
-                throw new ElasticSearchException($"Bulk InsertOrUpdate Docuemnt failed at index {indexName} :{response.ServerError.Error.Reason}");
-
+                throw new ElasticSearchException(
+                    $"Bulk InsertOrUpdate Docuemnt failed at index {indexName} :{response.ServerError.Error.Reason}");
         }
 
         private async Task BulkDelete<T, TKey>(string indexName, List<T> list) where T : EntityDto<TKey>
         {
-
             var bulk = new BulkRequest(indexName)
             {
                 Operations = new List<IBulkOperation>()
@@ -172,9 +180,11 @@ namespace Abp.ElasticSearch
             {
                 bulk.Operations.Add(new BulkDeleteOperation<T>(new Id(item)));
             }
+
             var response = await EsClient.BulkAsync(bulk);
             if (response.Errors)
-                throw new ElasticSearchException($"Bulk Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
+                throw new ElasticSearchException(
+                    $"Bulk Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
         }
 
         /// <summary>
@@ -186,21 +196,23 @@ namespace Abp.ElasticSearch
         /// <param name="list"></param>
         /// <param name="bulkNum">bulkNum</param>
         /// <returns></returns>
-        public virtual async Task BulkDeleteAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 100) where T : EntityDto<TKey>
+        public virtual async Task BulkDeleteAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 100)
+            where T : EntityDto<TKey>
         {
             if (list.Count <= bulkNum)
                 await BulkDelete<T, TKey>(indexName, list);
             else
             {
-                var total = (int)Math.Ceiling(list.Count * 1.0f / bulkNum);
+                var total = (int) Math.Ceiling(list.Count * 1.0f / bulkNum);
                 var tasks = new List<Task>();
                 for (var i = 0; i < total; i++)
                 {
                     var i1 = i;
-                    tasks.Add(Task.Factory.StartNew(() => BulkDelete<T, TKey>(indexName, list.Skip(i1 * bulkNum).Take(bulkNum).ToList())));
+                    tasks.Add(Task.Factory.StartNew(() =>
+                        BulkDelete<T, TKey>(indexName, list.Skip(i1 * bulkNum).Take(bulkNum).ToList())));
                 }
-                await Task.WhenAll(tasks);
 
+                await Task.WhenAll(tasks);
             }
         }
 
@@ -236,6 +248,7 @@ namespace Abp.ElasticSearch
             await DeleteIndexAsync(indexName);
             await CreateIndexAsync<T, TKey>(indexName);
         }
+
         /// <summary>
         /// Non-stop Update Documents
         /// </summary>
@@ -257,8 +270,10 @@ namespace Abp.ElasticSearch
             {
                 throw new Exception($"reBuild create newIndex {indexName} failed :{result.ServerError.Error.Reason}");
             }
+
             //重建索引数据
-            var reResult = await EsClient.ReindexOnServerAsync(descriptor => descriptor.Source(source => source.Index(indexName))
+            var reResult = await EsClient.ReindexOnServerAsync(descriptor => descriptor
+                .Source(source => source.Index(indexName))
                 .Destination(dest => dest.Index(newIndex)));
 
             if (reResult.ServerError != null)
@@ -272,8 +287,10 @@ namespace Abp.ElasticSearch
 
             if (!deleteResult.Acknowledged)
             {
-                throw new Exception($"reBuild delete old Index {oldName.Name}   failed :{deleteResult.ServerError.Error.Reason}");
+                throw new Exception(
+                    $"reBuild delete old Index {oldName.Name}   failed :{deleteResult.ServerError.Error.Reason}");
             }
+
             if (!reAliasResult.IsValid)
             {
                 throw new Exception($"reBuild set Alias {indexName}  failed :{reAliasResult.ServerError.Error.Reason}");
@@ -295,8 +312,10 @@ namespace Abp.ElasticSearch
         /// <param name="disableHigh"></param>
         /// <param name="highField">Highlight fields</param>
         /// <returns></returns>
-        public virtual async Task<ISearchResponse<T>> SearchAsync<T, TKey>(string indexName, SearchDescriptor<T> query, int skip, int size, string[] includeFields = null,
-            string preTags = "<strong style=\"color: red;\">", string postTags = "</strong>", bool disableHigh = false, params string[] highField) where T : EntityDto<TKey>
+        public virtual async Task<ISearchResponse<T>> SearchAsync<T, TKey>(string indexName, SearchDescriptor<T> query,
+            int skip, int size, string[] includeFields = null,
+            string preTags = "<strong style=\"color: red;\">", string postTags = "</strong>", bool disableHigh = false,
+            params string[] highField) where T : EntityDto<TKey>
         {
             query.Index(indexName);
             var highlight = new HighlightDescriptor<T>();
@@ -305,6 +324,7 @@ namespace Abp.ElasticSearch
                 preTags = "";
                 postTags = "";
             }
+
             highlight.PreTags(preTags).PostTags(postTags);
 
             var isHigh = highField != null && highField.Length > 0;
@@ -327,6 +347,15 @@ namespace Abp.ElasticSearch
             if (includeFields != null)
                 query.Source(ss => ss.Includes(ff => ff.Fields(includeFields.ToArray())));
             var response = await EsClient.SearchAsync<T>(query);
+            return response;
+        }
+
+        public virtual async Task<CountResponse> CountAsync<T, TKey>(string indexName,
+            Func<QueryContainerDescriptor<T>, QueryContainer> query)
+            where T : EntityDto<TKey>
+        {
+            var response = await EsClient.CountAsync<T>(c => c.Index(indexName).Query(query));
+
             return response;
         }
     }

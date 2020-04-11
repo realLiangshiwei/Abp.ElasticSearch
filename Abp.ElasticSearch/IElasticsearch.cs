@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Abp.Application.Services.Dto;
 using Abp.Dependency;
@@ -9,7 +10,7 @@ namespace Abp.ElasticSearch
     /// <summary>
     /// 接口
     /// </summary>
-    public interface IElasticsearch: ITransientDependency
+    public interface IElasticsearch : ITransientDependency
     {
         /// <summary>
         /// CreateEsIndex Not Mapping
@@ -31,7 +32,8 @@ namespace Abp.ElasticSearch
         /// <param name="shard"></param>
         /// <param name="numberOfReplicas"></param>
         /// <returns></returns>
-        Task CreateIndexAsync<T, TKey>(string indexName, int shard = 1, int numberOfReplicas = 1) where T : EntityDto<TKey>;
+        Task CreateIndexAsync<T, TKey>(string indexName, int shard = 1, int numberOfReplicas = 1)
+            where T : EntityDto<TKey>;
 
         /// <summary>
         /// ReIndex
@@ -63,7 +65,8 @@ namespace Abp.ElasticSearch
         /// <param name="list"></param>
         /// <param name="bulkNum">bulkNum</param>
         /// <returns></returns>
-        Task BulkAddorUpdateAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000) where T : EntityDto<TKey>;
+        Task BulkAddorUpdateAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000)
+            where T : EntityDto<TKey>;
 
         /// <summary>
         ///  Bulk Delete Document,Default bulkNum is 1000
@@ -121,6 +124,11 @@ namespace Abp.ElasticSearch
         /// <returns></returns>
         Task<ISearchResponse<T>> SearchAsync<T, TKey>(string indexName, SearchDescriptor<T> query,
             int skip, int size, string[] includeFields = null, string preTags = "<strong style=\"color: red;\">",
-            string postTags = "</strong>", bool disableHigh = false, params string[] highField) where T : EntityDto<TKey>;
+            string postTags = "</strong>", bool disableHigh = false, params string[] highField)
+            where T : EntityDto<TKey>;
+
+
+        Task<CountResponse> CountAsync<T, TKey>(string indexName,
+            Func<QueryContainerDescriptor<T>, QueryContainer> query) where T : EntityDto<TKey>;
     }
 }

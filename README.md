@@ -1,4 +1,4 @@
-# AbpElasticSearch Plug
+# AbpElasticSearch Module
 aspnetboilerplate repository
 > https://github.com/aspnetboilerplate/aspnetboilerplate
 

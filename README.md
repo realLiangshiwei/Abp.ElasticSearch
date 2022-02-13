@@ -7,6 +7,7 @@ Nuget
 
 
 ## Get Started 
+
 in Visual Studio,using the Package Manager Console :
 > Install-Package Abp.ElasticSearch
 
@@ -33,84 +34,77 @@ public class CodeModule : AbpModule
 }
 ```
 
+### Sample
+
+You can see the [sample](https://github.com/realLiangshiwei/Abp.ElasticSearch/tree/master/Samples/BookStore) to learn the basic usage;
+
+![](/img/1.png)
+
+![](/img/2.png)
+
 ### API List
 
 ``` csharp
 /// <summary>
-/// CreateEsIndex Not Mapping
-/// Auto Set Alias alias is Input IndexName
-/// </summary>
-/// <param name="indexName"></param>
-/// <param name="shard"></param>
-/// <param name="numberOfReplicas"></param>
-/// <returns></returns>
-Task CrateIndexAsync(string indexName, int shard = 1, int numberOfReplicas = 1);
-
-/// <summary>
 /// CreateEsIndex auto Mapping T Property
 /// Auto Set Alias alias is Input IndexName
 /// </summary>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="TKey"></typeparam>
 /// <param name="indexName"></param>
 /// <param name="shard"></param>
 /// <param name="numberOfReplicas"></param>
 /// <returns></returns>
-Task CreateIndexAsync<T, TKey>(string indexName, int shard = 1, int numberOfReplicas = 1) where T : EntityDto<TKey>;
+Task CreateIndexAsync<T>(string indexName, int shard = 1, int numberOfReplicas = 1)
+    where T: class;
+
+Task CreateIndexAsync<T>(string indexName, Func<IndexSettingsDescriptor, IndexSettingsDescriptor> selector)
+    where T: class;
 
 /// <summary>
 /// ReIndex
 /// </summary>
 /// <typeparam name="T"></typeparam>
-/// <typeparam name="TKey"></typeparam>
 /// <param name="indexName"></param>
 /// <returns></returns>
-Task ReIndex<T, TKey>(string indexName) where T : EntityDto<TKey>;
+Task ReIndex<T>(string indexName) where T : class;
 
 
 /// <summary>
 /// AddOrUpdate Document
 /// </summary>
 /// <typeparam name="T"></typeparam>
-/// <typeparam name="TKey"></typeparam>
 /// <param name="indexName"></param>
 /// <param name="model"></param>
 /// <returns></returns>
-Task AddOrUpdateAsync<T, TKey>(string indexName, T model) where T : EntityDto<TKey>;
+Task AddOrUpdateAsync<T>(string indexName, T model) where T : class;
 
 
 /// <summary>
 /// Bulk AddOrUpdate Document,Default bulkNum is 1000
 /// </summary>
 /// <typeparam name="T"></typeparam>
-/// <typeparam name="TKey"></typeparam>
 /// <param name="indexName"></param>
 /// <param name="list"></param>
-/// <param name="bulkNum">bulkNum</param>
 /// <returns></returns>
-Task BulkAddorUpdateAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000) where T : EntityDto<TKey>;
+Task BulkAddOrUpdateAsync<T>(string indexName, List<T> list)
+    where T : class;
 
 /// <summary>
 ///  Bulk Delete Document,Default bulkNum is 1000
 /// </summary>
 /// <typeparam name="T"></typeparam>
-/// <typeparam name="TKey"></typeparam>
 /// <param name="indexName"></param>
 /// <param name="list"></param>
-/// <param name="bulkNum">bulkNum</param>
 /// <returns></returns>
-Task BulkDeleteAsync<T, TKey>(string indexName, List<T> list, int bulkNum = 1000) where T : EntityDto<TKey>;
+Task BulkDeleteAsync<T>(string indexName, List<T> list) where T : class;
 
 /// <summary>
 /// Delete Document
 /// </summary>
 /// <typeparam name="T"></typeparam>
-/// <typeparam name="TKey"></typeparam>
 /// <param name="indexName"></param>
-/// <param name="typeName"></param>
 /// <param name="model"></param>
 /// <returns></returns>
-Task DeleteAsync<T, TKey>(string indexName, T model) where T : EntityDto<TKey>;
+Task DeleteAsync<T>(string indexName, T model) where T : class;
 
 /// <summary>
 /// Delete Index
@@ -124,16 +118,14 @@ Task DeleteIndexAsync(string indexName);
 /// Non-stop Update Documents
 /// </summary>
 /// <typeparam name="T"></typeparam>
-/// <typeparam name="TKey"></typeparam>
 /// <param name="indexName"></param>
 /// <returns></returns>
-Task ReBuild<T, TKey>(string indexName) where T : EntityDto<TKey>;
+Task ReBuild<T>(string indexName) where T : class;
 
 /// <summary>
 /// search
 /// </summary>
 /// <typeparam name="T"></typeparam>
-/// <typeparam name="TKey"></typeparam>
 /// <param name="indexName"></param>
 /// <param name="query"></param>
 /// <param name="skip">skip num</param>
@@ -144,8 +136,19 @@ Task ReBuild<T, TKey>(string indexName) where T : EntityDto<TKey>;
 /// <param name="disableHigh"></param>
 /// <param name="highField">Highlight fields</param>
 /// <returns></returns>
-Task<ISearchResponse<T>> SearchAsync<T, TKey>(string indexName, SearchDescriptor<T> query,
-    int skip, int size, string[] includeFields = null, string preTags = "<strong style=\"color: red;\">",
-    string postTags = "</strong>", bool disableHigh = false, params string[] highField) where T : EntityDto<TKey>;
+Task<ISearchResponse<T>> SearchAsync<T>(
+    string indexName, 
+    SearchDescriptor<T> query = null,
+    int skip = 0, 
+    int size = 20,
+    string[] includeFields = null,
+    string preTags = "<strong style=\"color: red;\">", string postTags = "</strong>", bool disableHigh = false,
+    string[] highFields = null)
+    where T : class;
+
+Task<CountResponse> CountAsync<T>(string indexName) where T : class;
+
+Task<CountResponse> CountAsync<T>(string indexName,
+    Func<QueryContainerDescriptor<T>, QueryContainer> query) where T : class;
 
 ```

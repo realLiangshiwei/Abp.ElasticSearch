@@ -9,7 +9,7 @@ namespace Abp.ElasticSearch.Configuration
 
         /// <summary>
         /// 连接字符串支持多个节点主机 使用|进行分隔
-        /// 例如 localhost:9200|localhost:8200
+        /// 例如 http://localhost:9200/|http://localhost:8200/
         /// </summary>
         string ConnectionString { get; set; }
 

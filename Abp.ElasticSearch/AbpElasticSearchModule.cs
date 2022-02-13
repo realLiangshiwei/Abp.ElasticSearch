@@ -12,7 +12,7 @@ namespace Abp.ElasticSearch
         {
             IocManager.Register<IElasticSearchConfiguration, ElasticSearchConfiguration>();
 
-            IocManager.Register<IElasticsearch,AbpElasticSearch>(DependencyLifeStyle.Transient);
+            IocManager.Register<IElasticsearchManager,AbpElasticSearchManager>(DependencyLifeStyle.Transient);
         }
 
         public override void Initialize()

@@ -45,7 +45,7 @@ namespace Abp.ElasticSearch
 
 
         /// <summary>
-        /// Bulk AddOrUpdate Document,Default bulkNum is 1000
+        /// Bulk AddOrUpdate Document
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="indexName"></param>
@@ -55,7 +55,7 @@ namespace Abp.ElasticSearch
             where T : class;
 
         /// <summary>
-        ///  Bulk Delete Document,Default bulkNum is 1000
+        ///  Bulk Delete Document
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="indexName"></param>

@@ -19,9 +19,9 @@ public class CodeModule : AbpModule
 
     public override void PreInitialize()
     {
-        Configuration.Modules.ElasticSearch().ConnectionString = "your collectionstring";
-        Configuration.Modules.ElasticSearch().AuthUserName = "your authusername";
-        Configuration.Modules.ElasticSearch().AuthPassWord = "your authpassword";
+        Configuration.Modules.ElasticSearch().ConnectionString = "your connection string";
+        Configuration.Modules.ElasticSearch().AuthUserName = "your auth username";
+        Configuration.Modules.ElasticSearch().AuthPassWord = "your auth password";
         //
     }
 

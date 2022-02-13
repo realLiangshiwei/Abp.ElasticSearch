@@ -105,7 +105,7 @@ namespace Abp.ElasticSearch
         /// <param name="list"></param>
         /// <param name="bulkNum">bulkNum</param>
         /// <returns></returns>
-        public virtual async Task BulkAddOrUpdateAsync<T>(string indexName, List<T> list, int bulkNum = 1000)
+        public virtual async Task BulkAddOrUpdateAsync<T>(string indexName, List<T> list)
             where T : class
         {
             await BulkAddOrUpdate(indexName, list);
@@ -153,24 +153,10 @@ namespace Abp.ElasticSearch
         /// <param name="list"></param>
         /// <param name="bulkNum">bulkNum</param>
         /// <returns></returns>
-        public virtual async Task BulkDeleteAsync<T>(string indexName, List<T> list, int bulkNum = 100)
+        public virtual async Task BulkDeleteAsync<T>(string indexName, List<T> list)
             where T : class
         {
-            if (list.Count <= bulkNum)
-                await BulkDelete<T>(indexName, list);
-            else
-            {
-                var total = (int)Math.Ceiling(list.Count * 1.0f / bulkNum);
-                var tasks = new List<Task>();
-                for (var i = 0; i < total; i++)
-                {
-                    var i1 = i;
-                    tasks.Add(Task.Factory.StartNew(() =>
-                        BulkDelete<T>(indexName, list.Skip(i1 * bulkNum).Take(bulkNum).ToList())));
-                }
-
-                await Task.WhenAll(tasks);
-            }
+            await BulkDelete<T>(indexName, list);
         }
 
         /// <summary>
@@ -267,11 +253,20 @@ namespace Abp.ElasticSearch
         /// <param name="disableHigh"></param>
         /// <param name="highField">Highlight fields</param>
         /// <returns></returns>
-        public virtual async Task<ISearchResponse<T>> SearchAsync<T>(string indexName, SearchDescriptor<T> query,
-            int skip, int size, string[] includeFields = null,
+        public virtual async Task<ISearchResponse<T>> SearchAsync<T>(
+            string indexName, 
+            SearchDescriptor<T> query = null,
+            int skip = 0, 
+            int size = 20,
+            string[] includeFields = null,
             string preTags = "<strong style=\"color: red;\">", string postTags = "</strong>", bool disableHigh = false,
-            params string[] highField) where T : class
+            string[] highFields = null) where T : class
         {
+            if (query == null)
+            {
+                query = new SearchDescriptor<T>();
+            }
+            
             query.Index(indexName);
             var highlight = new HighlightDescriptor<T>();
             if (disableHigh)
@@ -282,7 +277,7 @@ namespace Abp.ElasticSearch
 
             highlight.PreTags(preTags).PostTags(postTags);
 
-            var isHigh = highField != null && highField.Length > 0;
+            var isHigh = highFields != null && highFields.Length > 0;
 
             var hfs = new List<Func<HighlightFieldDescriptor<T>, IHighlightField>>();
 
@@ -291,27 +286,33 @@ namespace Abp.ElasticSearch
             //关键词高亮
             if (isHigh)
             {
-                foreach (var s in highField)
+                foreach (var s in highFields)
                 {
                     hfs.Add(f => f.Field(s));
                 }
+
+                highlight.Fields(hfs.ToArray());
+                query.Highlight(h => highlight);
             }
 
-            highlight.Fields(hfs.ToArray());
-            query.Highlight(h => highlight);
+            
             if (includeFields != null)
                 query.Source(ss => ss.Includes(ff => ff.Fields(includeFields.ToArray())));
             var response = await EsClient.SearchAsync<T>(query);
             return response;
         }
 
+        public virtual async Task<CountResponse> CountAsync<T>(string indexName)
+            where T : class
+        {
+            return await EsClient.CountAsync<T>(c => c.Index(indexName));
+        }
+
         public virtual async Task<CountResponse> CountAsync<T>(string indexName,
             Func<QueryContainerDescriptor<T>, QueryContainer> query)
             where T : class
         {
-            var response = await EsClient.CountAsync<T>(c => c.Index(indexName).Query(query));
-
-            return response;
+            return await EsClient.CountAsync<T>(c => c.Index(indexName).Query(query));
         }
     }
 }

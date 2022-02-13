@@ -1,0 +1,72 @@
+﻿@using static BookStore.Web.Controllers.PostController
+@{
+    Layout = null;
+}
+@model List<PostViewModel>
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>Posts</title>
+        <!-- Bootstrap core CSS -->
+        <link href="/css/bootstrap.min.css" rel="stylesheet">
+
+    </head>
+    <body>
+
+        <header>
+            <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+                <div class="collapse navbar-collapse" id="navbarCollapse">
+                    <form class="form-inline mt-2 mt-md-0" action="/post/search">
+                        <input class="form-control mr-sm-2" id="keyword" name="keyword" type="text" placeholder="Search" aria-label="Search">
+                        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                    </form>
+                </div>
+            </nav>
+        </header>
+
+        <main role="main">
+            <div class="container mt-4 mb-5">
+                <div class="row">
+                    <section class="col-md-12 col-lg-9">
+                        
+                        <h3>
+                            <span>
+                                All Posts
+                            </span>
+                        </h3>
+
+                        @foreach(var item in Model)
+                        {
+                            <article class="article-post-summary" lang="en-us">
+                                <div class="post-summary-box d-block">
+                                    <time datetime="@item.DateTime" class="d-none">
+                                        @item.DateTime
+                                    </time>
+
+                                    <h4 class="post-summary-title mb-3">
+                                         @Html.Raw(@item.Title)
+                                  
+                                    </h4>
+
+                                    <p class="post-summary-text">
+                                        @Html.Raw(item.Content)
+                                     </p>
+                                </div>
+                            </article>
+                            <div class="mb-4 d-none d-md-block"></div>
+                            <hr class="d-none d-md-block">
+                        }
+
+                        
+
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <script src="libs/jquery/jquery.min.js"></script>
+        <script src="libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
+
+    </body>
+</html>

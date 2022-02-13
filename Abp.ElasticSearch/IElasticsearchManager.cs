@@ -50,9 +50,8 @@ namespace Abp.ElasticSearch
         /// <typeparam name="T"></typeparam>
         /// <param name="indexName"></param>
         /// <param name="list"></param>
-        /// <param name="bulkNum">bulkNum</param>
         /// <returns></returns>
-        Task BulkAddOrUpdateAsync<T>(string indexName, List<T> list, int bulkNum = 1000)
+        Task BulkAddOrUpdateAsync<T>(string indexName, List<T> list)
             where T : class;
 
         /// <summary>
@@ -61,9 +60,8 @@ namespace Abp.ElasticSearch
         /// <typeparam name="T"></typeparam>
         /// <param name="indexName"></param>
         /// <param name="list"></param>
-        /// <param name="bulkNum">bulkNum</param>
         /// <returns></returns>
-        Task BulkDeleteAsync<T>(string indexName, List<T> list, int bulkNum = 1000) where T : class;
+        Task BulkDeleteAsync<T>(string indexName, List<T> list) where T : class;
 
         /// <summary>
         /// Delete Document
@@ -104,11 +102,18 @@ namespace Abp.ElasticSearch
         /// <param name="disableHigh"></param>
         /// <param name="highField">Highlight fields</param>
         /// <returns></returns>
-        Task<ISearchResponse<T>> SearchAsync<T>(string indexName, SearchDescriptor<T> query,
-            int skip, int size, string[] includeFields = null, string preTags = "<strong style=\"color: red;\">",
-            string postTags = "</strong>", bool disableHigh = false, params string[] highField)
+        Task<ISearchResponse<T>> SearchAsync<T>(
+            string indexName, 
+            SearchDescriptor<T> query = null,
+            int skip = 0, 
+            int size = 20,
+            string[] includeFields = null,
+            string preTags = "<strong style=\"color: red;\">", string postTags = "</strong>", bool disableHigh = false,
+            string[] highFields = null)
             where T : class;
 
+        Task<CountResponse> CountAsync<T>(string indexName) where T : class;
+        
         Task<CountResponse> CountAsync<T>(string indexName,
             Func<QueryContainerDescriptor<T>, QueryContainer> query) where T : class;
     }
